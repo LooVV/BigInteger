@@ -359,10 +359,22 @@ std::string BigInteger::ToString()
 
 bool BigInteger::_BigNumber::GreaterModulo(const _BigNumber& num1, const _BigNumber& num2)
 {
-	if (abs(num1.Rank) <= abs(num2.Rank))
+	int AbsRank1 = abs(num1.Rank);
+	int AbsRank2 = abs(num2.Rank);
+
+	if (AbsRank1 > AbsRank2)
+		return true;
+	else if (AbsRank1 > AbsRank2)
 		return false;
 
-	return num1.Chunks > num2.Chunks;
+	for (int i = abs(num1.Rank) - 1; i >= 0; --i)
+	{
+		if (num1.Chunks[i] > num2.Chunks[i])
+			return true;
+		else if (num1.Chunks[i] < num2.Chunks[i])
+			return false;
+	}
+	return false;
 }
 void BigInteger::_BigNumber::_RecountRank()
 {
