@@ -19,7 +19,6 @@
 	
 
   TODO:
-- Avoid creation new object with - operations
 - Avoid creation new objects when deal with normal numbers
 - Avoid vector in _BigNumber
 - Rewrite MultiplyChunks without memory allocation
