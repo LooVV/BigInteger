@@ -13,7 +13,7 @@
 
 static bool isSameSign(int sign1, int sign2)
 {
-	return sign1 >= 0 && sign2 >= 0 || sign1 < 0 & sign2 < 0;
+	return sign1 >= 0 && sign2 >= 0 || sign1 < 0 && sign2 < 0;
 }
 
 static int MultiplyMaxRankResult(int sign1, int sign2)
@@ -71,7 +71,7 @@ void AddChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int L
 void SubtractChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int LowerSize, uint32_t* Result)
 {
 	//одинаковые знаки
-	int Take = 0;
+	unsigned int Take = 0;
 	size_t i = 0;
 	for (; i < LowerSize; ++i)
 	{
