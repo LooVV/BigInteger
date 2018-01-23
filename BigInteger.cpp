@@ -256,8 +256,20 @@ BigInteger operator+(const BigInteger& i1, const BigInteger& i2)
 BigInteger operator-(const BigInteger& i1, const BigInteger& i2)
 {
 	BigInteger Result;
-	//TODO: try to dont make new instance 
 	BigInteger::_AddInOrder(i1._Number, (-i2)._Number, Result._Number);
+	return Result;
+}
+//dont make new instance instance
+BigInteger operator-(const BigInteger& i1, BigInteger& i2)
+{
+	BigInteger Result;
+	//save and invert sign
+	int SaveRank = i2._Number.Rank;
+	i2._Number.Rank *= -1;
+
+	BigInteger::_AddInOrder(i1._Number, i2._Number, Result._Number);
+	i2._Number.Rank = SaveRank;
+
 	return Result;
 }
 
@@ -279,6 +291,15 @@ BigInteger& operator+=( BigInteger& i1, const BigInteger& i2)
 BigInteger& operator-=(BigInteger& i1, const BigInteger& i2)
 {
 	BigInteger::_AddInOrder(i1._Number, (-i2)._Number, i1._Number);
+	return i1;
+}
+BigInteger& operator-=(BigInteger& i1, BigInteger& i2)
+{
+	int SaveRank = i2._Number.Rank;
+	i2._Number.Rank *= -1;
+
+	BigInteger::_AddInOrder(i1._Number, i2._Number, i1._Number);
+	i2._Number.Rank = SaveRank;
 	return i1;
 }
 BigInteger& operator*=(BigInteger& i1, const BigInteger& i2)

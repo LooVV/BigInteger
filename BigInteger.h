@@ -1,16 +1,37 @@
+/*
+	Long Arithmetic 
+
+  Whole unsigned number consists of chunks, that represent 9 decimal digits,
+  maximal decimal value in single chunk 999999999,
+  Chunks with lover order, are located first in massive
+
+  Sign and count of used chunks stored in Rank
+	
+  Example:
+  Rank = -3
+  Chunks:
+  ------------------------------------
+  | 123456789 | 098765432 |		   1 |
+  ------------------------------------
+
+  Stored number is:
+	-10987654321123456789
+	
+
+  TODO:
+- Avoid creation new object with - operations
+- Avoid creation new objects when deal with normal numbers
+- Avoid vector in _BigNumber
+- Rewrite MultiplyChunks without memory allocation
+- Add division
+- Add other operations (bitwise, itc.)
+*/
+
 #pragma once
 #include <stdint.h>
 #include <vector>
 #include <string>
 
-/*TODO:
-	- Avoid creation new object with - operations
-	- Avoid creation new objects when deal with normal numbers
-	- Avoid vector in _BigNumber
-	- Rewrite MultiplyChunks without memory allocation
-	- Add division
-	- Add other operations (bitwise, itc.)
-*/
 class BigInteger
 {
 public:
@@ -75,9 +96,11 @@ public:
 
 	friend BigInteger operator+(const BigInteger& i1, const BigInteger& i2);
 	friend BigInteger operator-(const BigInteger& i1, const BigInteger& i2);
+	friend BigInteger operator-(const BigInteger& i1, BigInteger& i2);
 	friend BigInteger operator*(const BigInteger& i1, const BigInteger& i2);
 
 	friend BigInteger& operator+=(BigInteger& i1, const BigInteger& i2);
 	friend BigInteger& operator-=(BigInteger& i1, const BigInteger& i2);
+	friend BigInteger& operator-=(BigInteger& i1, BigInteger& i2);
 	friend BigInteger& operator*=(BigInteger& i1, const BigInteger& i2);
 };
