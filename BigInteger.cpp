@@ -383,9 +383,10 @@ bool BigInteger::_BigNumber::GreaterModulo(const _BigNumber& num1, const _BigNum
 	int AbsRank1 = abs(num1.Rank);
 	int AbsRank2 = abs(num2.Rank);
 
+	// TODO: why i rewrited this
 	if (AbsRank1 > AbsRank2)
 		return true;
-	else if (AbsRank1 > AbsRank2)
+	else if (AbsRank1 < AbsRank2)
 		return false;
 
 	for (int i = abs(num1.Rank) - 1; i >= 0; --i)
@@ -399,7 +400,7 @@ bool BigInteger::_BigNumber::GreaterModulo(const _BigNumber& num1, const _BigNum
 }
 void BigInteger::_BigNumber::_RecountRank()
 {
-	int i = Rank - 1;
+	int i = abs(Rank) - 1;
 	bool NonZero = false;
 
 	for (; i >= 0 ; --i)
@@ -451,13 +452,14 @@ void BigInteger::_PerformAdd(const _BigNumber& num1, const _BigNumber& num2, _Bi
 {
 	Result.Chunks.resize(abs(num1.Rank) + 1);
 
+	Result.Rank = AddModulo(num1.Rank, 1);
+	
 	if (isSameSign(num1.Rank, num2.Rank))
 	{
 		AddChunks(num1.Chunks.data(), num2.Chunks.data(), abs(num1.Rank), abs(num2.Rank), Result.Chunks.data());
 	}
 	else
 	{
-		Result.Rank = AddModulo( num1.Rank, 1);
 		SubtractChunks(num1.Chunks.data(), num2.Chunks.data(), abs(num1.Rank), abs(num2.Rank), Result.Chunks.data());
 	}
 	Result._RecountRank();
