@@ -6,7 +6,6 @@
 #include <string>
 
 
-
 class BigInteger
 {
 public:
@@ -17,17 +16,23 @@ public:
 	BigInteger(long long Number);
 	BigInteger(unsigned long long Number);
 
-	std::string ToString();
 
+	BigInteger(const BigInteger&)			 = default;
+	BigInteger(BigInteger&&)				 = default;
+	BigInteger& operator=(const BigInteger&) = default;
+	BigInteger& operator=(BigInteger&&)		 = default;
+
+	
+	std::string ToString();
 	
 	BigInteger Abs() const;
 
-	bool operator==(const BigInteger& i2) const;
-	bool operator!=(const BigInteger& i2) const;
-	bool operator> (const BigInteger& i2) const;
-	bool operator< (const BigInteger& i2) const;
-	bool operator>=(const BigInteger& i2) const;
-	bool operator<=(const BigInteger& i2) const;
+	bool operator==(const BigInteger& right) const;
+	bool operator!=(const BigInteger& right) const;
+	bool operator> (const BigInteger& right) const;
+	bool operator< (const BigInteger& right) const;
+	bool operator>=(const BigInteger& right) const;
+	bool operator<=(const BigInteger& right) const;
 
 
 	BigInteger operator-() const;
@@ -38,15 +43,15 @@ public:
 	BigInteger& operator--();
 	BigInteger operator--(int);
 
-	BigInteger operator+( const BigInteger& i2) const;
-	BigInteger operator-( const BigInteger& i2) const;
-	BigInteger operator-( BigInteger& i2)		const;
-	BigInteger operator*( const BigInteger& i2) const;
+	BigInteger operator+( const BigInteger& right) const;
+	BigInteger operator-( const BigInteger& right) const;
+	BigInteger operator-( BigInteger&		right) const;
+	BigInteger operator*( const BigInteger& right) const;
 
-	BigInteger& operator+=( const BigInteger& i2);
-	BigInteger& operator-=( const BigInteger& i2);
-	BigInteger& operator-=( BigInteger& i2);
-	BigInteger& operator*=( const BigInteger& i2);
+	BigInteger& operator+=( const BigInteger& right);
+	BigInteger& operator-=( const BigInteger& right);
+	BigInteger& operator-=( BigInteger&		  right);
+	BigInteger& operator*=( const BigInteger& right);
 
 private:
 	struct NumberBase
@@ -65,16 +70,15 @@ private:
 		//Rank may change after arithmetic operation, need recount
 		void _RecountRank();
 
-		bool operator==(const NumberBase& i2) const;
-		bool operator>(const NumberBase& i2) const;
-		bool operator<(const NumberBase& i2) const;
+		bool operator==(const NumberBase& right) const;
+		bool operator> (const NumberBase& right) const;
+		bool operator< (const NumberBase& right) const;
 
 
 		static int ConvertInt(int number, uint32_t * mas);
 		static int ConvertUInt(unsigned int number, uint32_t * mas);
 		static int ConvertInt64(long long number, uint32_t * mas);
 		static int ConvertUInt64(unsigned long long number, uint32_t * mas);
-
 
 
 		static bool IsSameSign(int sign1, int sign2);
@@ -92,8 +96,10 @@ private:
 		static void _AddInOrder(const NumberBase& num1, const NumberBase& num2, NumberBase& Result);
 		static void _MultiplyInOrder(const NumberBase& num1, const NumberBase& num2, NumberBase& Result);
 
-	} _Number;
-
+	};
 	BigInteger(const NumberBase& big);
+
+	NumberBase _Number;
 };
-#endif
+
+#endif // BIG_INTEGER_H
