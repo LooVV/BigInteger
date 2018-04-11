@@ -3,63 +3,33 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <cmath>
 #include "BigInteger.h"
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//					     Utility
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-static bool isSameSign(int sign1, int sign2)
-{
-	return sign1 >= 0 && sign2 >= 0 || sign1 < 0 && sign2 < 0;
-}
-
-static int MultiplyMaxRankResult(int sign1, int sign2)
-{
-	if (isSameSign(sign1, sign2))
-		return abs(sign1 + sign2);
-	else
-		return -(abs(sign1) + abs(sign2));
-}
-
-static int AddCapacityResult(int sign1, int sign2)
-{
-	return std::max(abs(sign1), abs(sign2));
-}
-
-static int AddModulo(int A, int B)
-{
-	if (A >= 0)
-		return A + B;
-	else
-		return A - B;
-}
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //					Chunks operations
-//		Here first passed must be mod greater that second
+//		First passed must be mod greater that second
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 
 
 // Result must be at least MaxSize + 1 size
 //first int must be bigger that second modulo
-void AddChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int LowerSize, uint32_t* Result)
+void BigInteger::NumberBase::AddChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int LowerSize, uint32_t* Result)
 {
 	int Carry = 0;
 	size_t i = 0;
 	for (; i < LowerSize; ++i)
 	{
 		uint32_t ChunkRes = int1[i] + int2[i] + Carry;
-		Result[i] = ChunkRes % (int)BigInteger::_BigNumber::ChunkLimit;
-		Carry = ChunkRes / (int)BigInteger::_BigNumber::ChunkLimit;
+		Result[i] = ChunkRes % (int)BigInteger::NumberBase::ChunkLimit;
+		Carry = ChunkRes / (int)BigInteger::NumberBase::ChunkLimit;
 	}
 	for (; i < MaxOperand; ++i)
 	{
 		uint32_t ChunkRes = int1[i] + Carry;
-		Result[i] = ChunkRes % (int)BigInteger::_BigNumber::ChunkLimit;
-		Carry = ChunkRes / (int)BigInteger::_BigNumber::ChunkLimit;
+		Result[i] = ChunkRes % (int)BigInteger::NumberBase::ChunkLimit;
+		Carry = ChunkRes / (int)BigInteger::NumberBase::ChunkLimit;
 	}
 	if (Carry)
 	{
@@ -67,17 +37,15 @@ void AddChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int L
 	}
 }
 
-//first int must be bigger that second modulo
-void SubtractChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int LowerSize, uint32_t* Result)
+void BigInteger::NumberBase::SubtractChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int LowerSize, uint32_t* Result)
 {
-	//одинаковые знаки
 	unsigned int Take = 0;
 	size_t i = 0;
 	for (; i < LowerSize; ++i)
 	{
 		if (int2[i] + Take > int1[i])
 		{
-			Result[i] = BigInteger::_BigNumber::ChunkLimit + int1[i] - int2[i] - Take;
+			Result[i] = BigInteger::NumberBase::ChunkLimit + int1[i] - int2[i] - Take;
 			Take = 1;
 		}
 		else
@@ -90,7 +58,7 @@ void SubtractChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, 
 	{
 		if (Take > int1[i])
 		{
-			Result[i] = BigInteger::_BigNumber::ChunkLimit + int1[i] - Take;
+			Result[i] = BigInteger::NumberBase::ChunkLimit + int1[i] - Take;
 			Take = 1;
 		}
 		else
@@ -102,7 +70,7 @@ void SubtractChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, 
 }
 
 //Result must be at least Max * 2  capacity
-void MultiplyChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int LowerSize, uint32_t* Result)
+void BigInteger::NumberBase::MultiplyChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, int LowerSize, uint32_t* Result)
 {
 	std::vector <uint32_t> AccMass;
 	std::vector <uint32_t> TmpMass;
@@ -126,16 +94,15 @@ void MultiplyChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, 
 		int j = 0;
 		for (; j < MaxOperand; ++j)
 		{
-			//TODO: check this
 			Accumulator = (uint64_t)int1[j] * int2[i] + Carry;
-			Carry = Accumulator / BigInteger::_BigNumber::ChunkLimit;
+			Carry = Accumulator / BigInteger::NumberBase::ChunkLimit;
 			
-			TmpMass[j + Offset] = Accumulator % BigInteger::_BigNumber::ChunkLimit;
+			TmpMass[j + Offset] = Accumulator % BigInteger::NumberBase::ChunkLimit;
 		}
 		if (Carry > 0)
-			TmpMass[j + Offset] = Carry;
+			TmpMass[j + Offset] = static_cast<uint32_t>(Carry);
 		
-		AddChunks(AccMass.data(), TmpMass.data(), ResSize, ResSize, AccMass.data());
+		AddChunks(AccMass.data(), TmpMass.data(), static_cast<int>(ResSize), static_cast<int>(ResSize), AccMass.data());
 		Offset++;
 	}
 
@@ -146,11 +113,14 @@ void MultiplyChunks(const uint32_t* int1, const uint32_t* int2, int MaxOperand, 
 
 }
 
+
+
+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
 //					Constructors
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-BigInteger::BigInteger(const _BigNumber& big): _Number{ big }
+BigInteger::BigInteger(const NumberBase& big): _Number{ big }
 {
 }
 
@@ -160,23 +130,23 @@ BigInteger::BigInteger()
 
 BigInteger::BigInteger(int Number)
 {
-	_Number.Chunks.resize(_BigNumber::MaxChunksInInteger);
-	_Number.Rank  = BigInteger::ConvertInt(Number, _Number.Chunks.data() );
+	_Number.Chunks.resize(NumberBase::MaxChunksInInteger);
+	_Number.Rank  = BigInteger::NumberBase::ConvertInt(Number, _Number.Chunks.data() );
 }
 BigInteger::BigInteger(unsigned int Number)
 {
-	_Number.Chunks.resize(_BigNumber::MaxChunksInInteger);
-	_Number.Rank = BigInteger::ConvertUInt(Number, _Number.Chunks.data());
+	_Number.Chunks.resize(NumberBase::MaxChunksInInteger);
+	_Number.Rank = BigInteger::NumberBase::ConvertUInt(Number, _Number.Chunks.data());
 }
 BigInteger::BigInteger(long long Number)
 {
-	_Number.Chunks.resize(_BigNumber::MaxChunksInInteger);
-	_Number.Rank = BigInteger::ConvertInt64(Number, _Number.Chunks.data());
+	_Number.Chunks.resize(NumberBase::MaxChunksInInteger);
+	_Number.Rank = BigInteger::NumberBase::ConvertInt64(Number, _Number.Chunks.data());
 }
 BigInteger::BigInteger(unsigned long long Number)
 {
-	_Number.Chunks.resize(_BigNumber::MaxChunksInInteger);
-	_Number.Rank = BigInteger::ConvertUInt64(Number, _Number.Chunks.data());
+	_Number.Chunks.resize(NumberBase::MaxChunksInInteger);
+	_Number.Rank = BigInteger::NumberBase::ConvertUInt64(Number, _Number.Chunks.data());
 }
 
 BigInteger::BigInteger(const char* NumberStr)
@@ -198,16 +168,16 @@ BigInteger::BigInteger(const char* NumberStr)
 			return;
 		}
 
-	char Buff[BigInteger::_BigNumber::DecimalInChunk + 1] = {};
+	char Buff[BigInteger::NumberBase::DecimalInChunk + 1] = {};
 
-	int NChunks = (int)ceil((double)StrSize / BigInteger::_BigNumber::DecimalInChunk);
+	int NChunks = (int)std::ceil((double)StrSize / BigInteger::NumberBase::DecimalInChunk);
 	_Number.Chunks.resize(NChunks);
 	_Number.Rank *= NChunks;
 	//begining of the digits for current chunk
 	size_t BeginChunkCharacter = 0;
 
-	//number of digits that not fully in BigInteger::_BigNumber::DecimalInChunk border
-	int HighChunkDigits = StrSize % BigInteger::_BigNumber::DecimalInChunk;
+	//number of digits that not fully in BigInteger::NumberBase::DecimalInChunk border
+	int HighChunkDigits = StrSize % BigInteger::NumberBase::DecimalInChunk;
 	//not fully filled can be only highlest chunk
 	if (HighChunkDigits > 0)
 	{
@@ -221,21 +191,22 @@ BigInteger::BigInteger(const char* NumberStr)
 	while (CurChunk !=0)
 	{
 		CurChunk--;
-		memcpy(Buff, BeginChunkCharacter + NumberStr, BigInteger::_BigNumber::DecimalInChunk);
+		memcpy(Buff, BeginChunkCharacter + NumberStr, BigInteger::NumberBase::DecimalInChunk);
 		_Number.Chunks[CurChunk] = strtoul(Buff, NULL, 10);
-		BeginChunkCharacter += BigInteger::_BigNumber::DecimalInChunk;
+		BeginChunkCharacter += BigInteger::NumberBase::DecimalInChunk;
 	}
 }
+
+
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
 //				Overloaded operators
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//unary 
 
 BigInteger BigInteger::operator-()const 
 {
-	_BigNumber Negative{ _Number };
+	NumberBase Negative{ _Number };
 	Negative.Rank = -Negative.Rank;
 	return Negative;
 }
@@ -244,69 +215,69 @@ BigInteger BigInteger::operator+()const
 	return BigInteger(*this);
 }
 
-//binary 
 
-BigInteger operator+(const BigInteger& i1, const BigInteger& i2)
+BigInteger BigInteger::operator+( const BigInteger& i2) const 
 {
 	BigInteger Result;
-	BigInteger::_AddInOrder(i1._Number, i2._Number, Result._Number);
+	NumberBase::_AddInOrder(this->_Number, i2._Number, Result._Number);
 	return Result;
 }
 
-BigInteger operator-(const BigInteger& i1, const BigInteger& i2)
+BigInteger BigInteger::operator-( const BigInteger& i2) const
 {
 	BigInteger Result;
-	BigInteger::_AddInOrder(i1._Number, (-i2)._Number, Result._Number);
+	NumberBase::_AddInOrder(this->_Number, (-i2)._Number, Result._Number);
 	return Result;
 }
+
 //dont make new instance instance
-BigInteger operator-(const BigInteger& i1, BigInteger& i2)
+BigInteger BigInteger::operator-( BigInteger& i2) const
 {
 	BigInteger Result;
 	//save and invert sign
 	int SaveRank = i2._Number.Rank;
 	i2._Number.Rank *= -1;
 
-	BigInteger::_AddInOrder(i1._Number, i2._Number, Result._Number);
+	NumberBase::_AddInOrder(this->_Number, i2._Number, Result._Number);
 	i2._Number.Rank = SaveRank;
 
 	return Result;
 }
 
-BigInteger operator*(const BigInteger& i1, const BigInteger& i2)
+BigInteger BigInteger::operator*( const BigInteger& i2) const
 {
 	BigInteger Result;
-	BigInteger::_MultiplyInOrder(i1._Number, i2._Number, Result._Number);
+	NumberBase::_MultiplyInOrder(this->_Number, i2._Number, Result._Number);
 	return Result;
 }
 
 
-// compound
 
-BigInteger& operator+=( BigInteger& i1, const BigInteger& i2)
+BigInteger& BigInteger::operator+=(  const BigInteger& i2)
 {
-	BigInteger::_AddInOrder(i1._Number, i2._Number, i1._Number);
-	return i1;
+	NumberBase::_AddInOrder(this->_Number, i2._Number, this->_Number);
+	return *this;
 }
-BigInteger& operator-=(BigInteger& i1, const BigInteger& i2)
+BigInteger& BigInteger::operator-=( const BigInteger& i2)
 {
-	BigInteger::_AddInOrder(i1._Number, (-i2)._Number, i1._Number);
-	return i1;
+	NumberBase::_AddInOrder(this->_Number, (-i2)._Number, this->_Number);
+	return *this;
 }
-BigInteger& operator-=(BigInteger& i1, BigInteger& i2)
+BigInteger& BigInteger::operator-=( BigInteger& i2)
 {
 	int SaveRank = i2._Number.Rank;
 	i2._Number.Rank *= -1;
 
-	BigInteger::_AddInOrder(i1._Number, i2._Number, i1._Number);
+	NumberBase::_AddInOrder(this->_Number, i2._Number, this->_Number);
 	i2._Number.Rank = SaveRank;
-	return i1;
+	return *this;
 }
-BigInteger& operator*=(BigInteger& i1, const BigInteger& i2)
+BigInteger& BigInteger::operator*=( const BigInteger& i2)
 {
-	BigInteger::_MultiplyInOrder(i1._Number, (-i2)._Number, i1._Number);
-	return i1;
+	NumberBase::_MultiplyInOrder(this->_Number, (-i2)._Number, this->_Number);
+	return *this;
 }
+
 
 //	increment/decrement
 
@@ -336,8 +307,10 @@ BigInteger BigInteger::operator--(int)
 	return Tmp;
 }
 
+
+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
-//						Other operators
+//					Other operators
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 BigInteger BigInteger::Abs() const 
@@ -347,38 +320,62 @@ BigInteger BigInteger::Abs() const
 	return Int;
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++
-//						Compare
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 std::string BigInteger::ToString()
 {
-	if (_Number.Rank == 0 )
+	if (_Number.Rank == 0)
 		return "0";
 
 	std::string Res;
 	if (_Number.Rank < 0)
 		Res.push_back('-');
-	
+
 	size_t i = abs(_Number.Rank) - 1;
 
 	//need first without padding
 	Res += std::to_string(_Number.Chunks[i]);
 
-	while (i != 0) 
+	while (i != 0)
 	{
 		--i;
 		std::string Digits = std::to_string(_Number.Chunks[i]);
-		Res += std::string(BigInteger::_BigNumber::DecimalInChunk - Digits.size(), '0').append(Digits);
+		Res += std::string(BigInteger::NumberBase::DecimalInChunk - Digits.size(), '0').append(Digits);
 	}
 	return Res;
-} 
+}
+
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
 //					Utility functions
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-bool BigInteger::_BigNumber::GreaterModulo(const _BigNumber& num1, const _BigNumber& num2)
+
+bool BigInteger::NumberBase::IsSameSign(int sign1, int sign2)
+{
+	return sign1 >= 0 && sign2 >= 0 || sign1 < 0 && sign2 < 0;
+}
+
+// returns max rank for multiplication result
+int BigInteger::NumberBase::MultiplyMaxRankResult(int sign1, int sign2)
+{
+	if (IsSameSign(sign1, sign2))
+		return abs(sign1 + sign2);
+	else
+		return -(abs(sign1) + abs(sign2));
+}
+
+// add or substract second arg to get bigger modulo value
+// b must be >= 0
+int BigInteger::NumberBase::AddModulo(int A, int B)
+{
+	if (A >= 0)
+		return A + B;
+	else
+		return A - B;
+}
+
+
+bool BigInteger::NumberBase::GreaterModulo(const NumberBase& num1, const NumberBase& num2)
 {
 	int AbsRank1 = abs(num1.Rank);
 	int AbsRank2 = abs(num2.Rank);
@@ -398,7 +395,8 @@ bool BigInteger::_BigNumber::GreaterModulo(const _BigNumber& num1, const _BigNum
 	}
 	return false;
 }
-void BigInteger::_BigNumber::_RecountRank()
+
+void BigInteger::NumberBase::_RecountRank()
 {
 	int i = abs(Rank) - 1;
 	bool NonZero = false;
@@ -421,17 +419,18 @@ void BigInteger::_BigNumber::_RecountRank()
 		Rank = -(i + 1);
 }
 
+
 //passig mod bigger to functions like _Perform
-void inline BigInteger::_AddInOrder(const _BigNumber& num1, const _BigNumber& num2, _BigNumber& Result)
+void BigInteger::NumberBase::_AddInOrder(const NumberBase& num1, const NumberBase& num2, NumberBase& Result)
 {
-	if (_BigNumber::GreaterModulo(num1, num2))
+	if (BigInteger::NumberBase::GreaterModulo(num1, num2))
 		_PerformAdd(num1, num2, Result);
 	else
 		_PerformAdd(num2, num1, Result);
 }
-void inline BigInteger::_MultiplyInOrder(const _BigNumber& num1, const _BigNumber& num2, _BigNumber& Result)
+void BigInteger::NumberBase::_MultiplyInOrder(const NumberBase& num1, const NumberBase& num2, NumberBase& Result)
 {
-	 if (_BigNumber::GreaterModulo(num1, num2))
+	 if (BigInteger::NumberBase::GreaterModulo(num1, num2))
 		 _PerformMultiply(num1, num2, Result);
 	 else
 		 _PerformMultiply(num2, num1, Result);
@@ -439,7 +438,7 @@ void inline BigInteger::_MultiplyInOrder(const _BigNumber& num1, const _BigNumbe
 
 
 //perform operation, based on signs of numbers
-void BigInteger::_PerformMultiply(const _BigNumber& num1, const _BigNumber& num2, _BigNumber& Result)
+void BigInteger::NumberBase::_PerformMultiply(const NumberBase& num1, const NumberBase& num2, NumberBase& Result)
 {
 	Result.Rank = MultiplyMaxRankResult(num1.Rank, num2.Rank);
 	Result.Chunks.resize( abs(Result.Rank) );
@@ -448,13 +447,13 @@ void BigInteger::_PerformMultiply(const _BigNumber& num1, const _BigNumber& num2
 
 	Result._RecountRank();
 }
-void BigInteger::_PerformAdd(const _BigNumber& num1, const _BigNumber& num2, _BigNumber& Result)
+void BigInteger::NumberBase::_PerformAdd(const NumberBase& num1, const NumberBase& num2, NumberBase& Result)
 {
 	Result.Chunks.resize(abs(num1.Rank) + 1);
 
 	Result.Rank = AddModulo(num1.Rank, 1);
 	
-	if (isSameSign(num1.Rank, num2.Rank))
+	if (IsSameSign(num1.Rank, num2.Rank))
 	{
 		AddChunks(num1.Chunks.data(), num2.Chunks.data(), abs(num1.Rank), abs(num2.Rank), Result.Chunks.data());
 	}
@@ -465,7 +464,13 @@ void BigInteger::_PerformAdd(const _BigNumber& num1, const _BigNumber& num2, _Bi
 	Result._RecountRank();
 }
 
-bool BigInteger::_BigNumber::operator==(const _BigNumber& i2) const
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++
+//						Compare
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+bool BigInteger::NumberBase::operator==(const NumberBase& i2) const
 {
 	if (Rank != i2.Rank)
 		return false;
@@ -479,7 +484,7 @@ bool BigInteger::_BigNumber::operator==(const _BigNumber& i2) const
 }
 
 
-bool BigInteger::_BigNumber::operator>(const _BigNumber& i2) const
+bool BigInteger::NumberBase::operator>(const NumberBase& i2) const
 {
 	if (Rank > i2.Rank)
 		return true;
@@ -496,7 +501,7 @@ bool BigInteger::_BigNumber::operator>(const _BigNumber& i2) const
 	}
 	return false;
 }
-bool BigInteger::_BigNumber::operator<(const _BigNumber& i2) const
+bool BigInteger::NumberBase::operator<(const NumberBase& i2) const
 {
 	if (Rank < i2.Rank)
 		return true;
@@ -515,9 +520,7 @@ bool BigInteger::_BigNumber::operator<(const _BigNumber& i2) const
 }
 
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++
-//						Compare
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 bool BigInteger::operator==(const BigInteger& i2) const
 {
 	return this->_Number == i2._Number;
@@ -547,7 +550,7 @@ bool BigInteger::operator<=(const BigInteger& i2) const
 //						Convert
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-int BigInteger::ConvertInt(int number, uint32_t * mas)
+int BigInteger::NumberBase::ConvertInt(int number, uint32_t * mas)
 {
 	int Sign;
 	if (number > 0)
@@ -562,27 +565,27 @@ int BigInteger::ConvertInt(int number, uint32_t * mas)
 		number = number * -1;
 
 	int Used = 1;
-	mas[0] = number % BigInteger::_BigNumber::ChunkLimit;
-	mas[1] = (uint32_t)(number / BigInteger::_BigNumber::ChunkLimit);
+	mas[0] = number % BigInteger::NumberBase::ChunkLimit;
+	mas[1] = (uint32_t)(number / BigInteger::NumberBase::ChunkLimit);
 	if (mas[1])
 		++Used;
 
 	return Used * Sign;
 }
-int BigInteger::ConvertUInt(unsigned int number, uint32_t * mas)
+int BigInteger::NumberBase::ConvertUInt(unsigned int number, uint32_t * mas)
 {
 	if (number == 0)
 		return 0;
 
 	int Used = 1;
-	mas[0] = number % BigInteger::_BigNumber::ChunkLimit;
-	mas[1] = (uint32_t)(number / BigInteger::_BigNumber::ChunkLimit);
+	mas[0] = number % BigInteger::NumberBase::ChunkLimit;
+	mas[1] = (uint32_t)(number / BigInteger::NumberBase::ChunkLimit);
 	if (mas[1])
 		++Used;
 
 	return Used;
 }
-int BigInteger::ConvertInt64(long long number, uint32_t * mas)
+int BigInteger::NumberBase::ConvertInt64(long long number, uint32_t * mas)
 {
 	int Sign;
 	if (number > 0)
@@ -597,39 +600,39 @@ int BigInteger::ConvertInt64(long long number, uint32_t * mas)
 		number = number * -1;
 
 	int Used = 1;
-	mas[0] = number % BigInteger::_BigNumber::ChunkLimit;
-	mas[1] = (uint32_t)((number / BigInteger::_BigNumber::ChunkLimit) % BigInteger::_BigNumber::ChunkLimit);
+	mas[0] = number % BigInteger::NumberBase::ChunkLimit;
+	mas[1] = (uint32_t)((number / BigInteger::NumberBase::ChunkLimit) % BigInteger::NumberBase::ChunkLimit);
 
 	if (mas[1])
 		++Used;
 
 	number -= mas[0];
-	number -= (long long)mas[1] * BigInteger::_BigNumber::ChunkLimit;
+	number -= (long long)mas[1] * BigInteger::NumberBase::ChunkLimit;
 	if (number != 0)
 	{
-		mas[2] = (uint32_t)number / ((long long)BigInteger::_BigNumber::ChunkLimit * BigInteger::_BigNumber::ChunkLimit);
+		mas[2] =static_cast<uint32_t>( (uint32_t)number / ((long long)ChunkLimit * ChunkLimit));
 		++Used;
 	}
 
 	return Used * Sign;
 }
-int BigInteger::ConvertUInt64(unsigned long long number, uint32_t * mas)
+int BigInteger::NumberBase::ConvertUInt64(unsigned long long number, uint32_t * mas)
 {
 	if (number == 0)
 		return 0;
 
 	int Used = 1;
-	mas[0] = number % BigInteger::_BigNumber::ChunkLimit;
-	mas[1] = (uint32_t)((number / BigInteger::_BigNumber::ChunkLimit) % BigInteger::_BigNumber::ChunkLimit);
+	mas[0] = number % BigInteger::NumberBase::ChunkLimit;
+	mas[1] = (uint32_t)((number / BigInteger::NumberBase::ChunkLimit) % BigInteger::NumberBase::ChunkLimit);
 
 	if (mas[1])
 		++Used;
 
 	number -= mas[0];
-	number -= (unsigned long long)mas[1] * BigInteger::_BigNumber::ChunkLimit;
+	number -= (unsigned long long)mas[1] * BigInteger::NumberBase::ChunkLimit;
 	if (number != 0)
 	{
-		mas[2] = (uint32_t) number / ((unsigned long long)BigInteger::_BigNumber::ChunkLimit * BigInteger::_BigNumber::ChunkLimit);
+		mas[2] = static_cast<uint32_t>((uint32_t) number / ((unsigned long long)ChunkLimit * ChunkLimit));
 		++Used;
 	}
 
