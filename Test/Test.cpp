@@ -1,6 +1,6 @@
 /*
 	Test.exe used to perform calculation on input data.
-	With test_op.py used to check the correctness of BigInteger's
+	With op_test.py used to check the correctness of BigInteger's
 	calculation.
 
 	I-O format ( every input/output ending by newline ):
@@ -19,7 +19,8 @@
 
 
 #define PRINT_OP(oper)\
-std::cout << ((first) oper ( second)).ToString() << '\n'  
+std::cout << ((first) oper ( second)).ToString() << '\n';\
+std::cout.flush()
 
 
 
@@ -31,7 +32,6 @@ int main()
 		std::getline(std::cin, op);
 		BigInteger first{ op.c_str() };
 
-		
 
 		std::getline(std::cin, op);
 		BigInteger second{ op.c_str() };

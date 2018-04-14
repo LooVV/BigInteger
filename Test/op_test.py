@@ -7,6 +7,8 @@
 import random
 import subprocess
 import sys
+import platform
+
 
 
 # numbers of test expression
@@ -23,7 +25,7 @@ op_func = lambda x,y: x+y
 
 
 def usage():
-	print( "Usage test.py {+/-/*}")
+	print( "Usage op_test.py {+/-/*}")
 
 
 def err_message(i,expression, expected, given):
@@ -33,6 +35,9 @@ def err_message(i,expression, expected, given):
 	print( "Given:      " + str(given))
 
 
+
+if platform.system() != "Windows":
+	test_program_name = "./" + test_program_name
 
 # parsing operation
 if len(sys.argv) == 2:
@@ -80,11 +85,13 @@ for i in range(repeat_count):
 	# specify operation
 	test_program.stdin.write( op_s + '\n')
 
+
 	# read result
 	expected_result = op_func(first_op, second_op)
+	#result = test_program.stdout.readline()
 	result = test_program.stdout.readline()
 
-	# compare results
+		# compare results
 	if int(result) != expected_result:
 		err_message(i, str(first_op) + "\n"+ op_s + " " + str(second_op) , expected_result , result)
 		sys.exit(1)
